@@ -1,6 +1,6 @@
 import sqlite3
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import (
     Flask,
@@ -17,6 +17,11 @@ app = Flask(__name__)
 app.secret_key = "fc49073ea49d45d78c613797800669b0"
 
 DATABASE = "finance_tracker.db"
+
+
+def calculate_installment_date(start_date_str, installment_number):
+    start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
+    return (start_date + timedelta(days=30 * installment_number)).strftime("%Y-%m-%d")
 
 
 def init_db():
@@ -161,18 +166,41 @@ def transactions():
 def add_transaction():
     if "username" in session:
         user_id = session["user_id"]  # Assuming you store user_id in session
-        date = request.form["date"]
+        date = request.form["date"] or datetime.today().strftime("%Y-%m-%d")
         category = request.form["category"]
-        amount = request.form["amount"]
+        amount = float(request.form["amount"])
         payment_method = request.form["payment_method"]
         description = request.form["notes"]
 
         conn = sqlite3.connect(DATABASE)
         c = conn.cursor()
-        c.execute(
-            "INSERT INTO transactions (user_id, date, category, amount, payment_method, description) VALUES (?, ?, ?, ?, ?, ?)",
-            (user_id, date, category, amount, payment_method, description),
-        )
+        if payment_method == "Credit":
+
+            installments = int(request.form.get("installments", 1))
+            installment_amount = amount / installments
+
+            for i in range(installments):
+                print(date)
+                installment_date = calculate_installment_date(
+                    date, i
+                )  # Function to calculate due date for each installment
+                c.execute(
+                    "INSERT INTO transactions (user_id, date, category, amount, payment_method, description) VALUES (?, ?, ?, ?, ?, ?)",
+                    (
+                        user_id,
+                        installment_date,
+                        category,
+                        installment_amount,
+                        payment_method,
+                        description,
+                    ),
+                )
+        else:
+            c.execute(
+                "INSERT INTO transactions (user_id, date, category, amount, payment_method, description) VALUES (?, ?, ?, ?, ?, ?)",
+                (user_id, date, category, amount, payment_method, description),
+            )
+
         conn.commit()
         conn.close()
 
@@ -259,7 +287,7 @@ def statistics():
         # Fetch total expenses for the logged-in user
         c.execute("SELECT SUM(amount) FROM transactions WHERE user_id = ?", (user_id,))
         total_expenses_result = c.fetchone()
-        total_expenses = total_expenses_result[0] if total_expenses_result else 0
+        total_expenses = total_expenses_result[0] or 0
 
         # Fetch expense breakdown by category for the logged-in user
         c.execute(

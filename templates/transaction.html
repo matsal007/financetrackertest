@@ -66,7 +66,7 @@ Transações - FinCompass
     <tr>
         <td>{{ transaction[4] }}</td>  {# Date #}
         <td>{{ transaction[3] }}</td>  {# Category #}
-        <td>R${{ transaction[2] }}</td>  {# Amount #}
+        <td>R${{ '%.2f' % transaction[2] }}</td>  {# Amount #}
         <td>{{ transaction[6] }}</td>  {# Payment Method #}
         <td>{{ transaction[5] }}</td>  {# Notes or Description #}
         <td>
@@ -118,6 +118,12 @@ Transações - FinCompass
                     <option value="Dinheiro">Dinheiro</option>
                 </select>
             </div>
+
+            <div class="mb-3"  id="installments" style="display:none;" >
+                <label for="installments" class="form-label">Número de Parcelas:</label>
+                <input type="number" name="installments" class="form-control" min="1" value="1" >
+            </div>
+
             <div class="mb-3">
                 <label for="notes" class="form-label">Observações:</label>
                 <textarea id="notes" name="notes" class="form-control"></textarea>
@@ -129,15 +135,15 @@ Transações - FinCompass
 
 
 <script>
-    // Function to open the popup window
-    function openPopup() {
-        document.getElementById("popup").style.display = "block";
-    }
+// Function to open the popup window
+function openPopup() {
+    document.getElementById("popup").style.display = "block";
+}
 
-    // Function to close the popup window
-    function closePopup() {
-        document.getElementById("popup").style.display = "none";
-    }
+// Function to close the popup window
+function closePopup() {
+    document.getElementById("popup").style.display = "none";
+}
 
 // Function to download the transaction table as a CSV file
 function downloadCSV() {
@@ -169,6 +175,23 @@ function downloadCSV() {
     // Remove the anchor element from the document body
     document.body.removeChild(a);
 }
+
+function openInstallments(){
+    const installmentsField = document.getElementById('installments');
+    const inputPaymentType = document.getElementById("payment_method")
+    console.log(inputPaymentType.value)
+    if (inputPaymentType.value === 'Credit') {
+        installmentsField.style.display = 'block';
+    } else {
+        installmentsField.style.display = 'none';
+        installmentsField.value = ''; // Reset value when not using credit
+    }
+}
+
+openInstallments();
+document.getElementById('payment_method').addEventListener('change', () => {
+    openInstallments();
+});
 
 </script>
 {% endblock %}
