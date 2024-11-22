@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Início - FinCompass
+{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <h2>Bem-vindo, {{ username }}!</h2>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Total de Transações em Crédito</h5>
+                <h6 class="card-subtitle mb-2 text-muted">R${{ total_upi }}</h6>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Total de Transações em Dinheiro</h5>
+                <h6 class="card-subtitle mb-2 text-muted">R${{ total_cash }}</h6>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Valor Total</h5>
+                <h6 class="card-subtitle mb-2 text-muted">R${{ total_amount }}</h6>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mt-4">
+        <div class="card">
+            <div class="card-header">
+                Valor Gasto por Dia (Este Mês)
+            </div>
+            <div class="card-body">
+                <canvas id="dailySpendingChart" width="200" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mt-4">
+        <div class="card">
+            <div class="card-header">
+                Valor Gasto por Mês
+            </div>
+            <div class="card-body">
+                <canvas id="monthlySpendingChart" width="200" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    // Function to fetch data for monthly spending
+    function fetchMonthlySpendingData() {
+        fetch('/monthly_spending_data')
+            .then(response => response.json())
+            .then(data => {
+                renderMonthlySpendingChart(data);
+            });
+    }
+
+    // Function to render the monthly spending chart
+    function renderMonthlySpendingChart(data) {
+        const ctx = document.getElementById('monthlySpendingChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: 'Valor Gasto',
+                    data: data.amounts,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    // Fetch data and render chart when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchMonthlySpendingData();
+    });
+
+    // Function to fetch data from Flask backend
+    function fetchDailySpendingData() {
+        fetch('/daily_spending_data')
+            .then(response => response.json())
+            .then(data => {
+                renderDailySpendingChart(data);
+            });
+    }
+
+    // Function to render the daily spending chart
+    function renderDailySpendingChart(data) {
+        const ctx = document.getElementById('dailySpendingChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: 'Valor Gasto',
+                    data: data.amounts,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    // Fetch data and render chart when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchDailySpendingData();
+    });
+
+    
+</script>
+
+
+{% endblock %}
